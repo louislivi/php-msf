@@ -201,6 +201,17 @@ class Article extends AdminAuth
         $post = $this->getContext()->getInput()->getAllPost();
         $shareModel = $this ->getObject(ShareModel::class);
         if (!empty($post) && $post != false){
+            $upload = $this->getObject(Upload::class);
+            if ($this->getContext()->getInput()->getFile('imageurl')['name']){
+                $result = $upload->article_upload("imageurl");
+                if($result){
+                    $filename = $upload->getFileName();
+                    $true_filename = '/article/'.$filename;
+                    $post['imageurl'] = $true_filename;
+                }else{
+                    $this->error($upload->getErrorMsg());
+                }
+            }
             $result = yield $shareModel ->setWechatConfig(json_encode($post));
             if ($result){
                 $this->success('设置成功！');
@@ -209,10 +220,12 @@ class Article extends AdminAuth
             }
         }else{
             $wx_data = json_decode(yield $shareModel ->getWechatConfig(),true);
-            if (!$wx_data){
-                $wx_data['appid']     = '';
-                $wx_data['secret'] = '';
-            }
+            $wx_data['appid'] = $wx_data['appid']?? '';
+            $wx_data['secret']= $wx_data['secret'] ?? '';
+            $wx_data['title'] = $wx_data['title'] ?? '';
+            $wx_data['randhost'] = $wx_data['randhost'] ?? '';
+            $wx_data['desc']     = $wx_data['desc'] ?? '';
+            $wx_data['imageurl'] = $wx_data['imageurl'] ?? '';
             $this->outputView(['data' => $wx_data]);
 
         }
