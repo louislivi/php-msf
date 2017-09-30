@@ -13,7 +13,7 @@
 
     <link rel="stylesheet" href="/static/plugins/layui/css/layui.css" media="all" />
     <link rel="stylesheet" href="/static/plugins/font-awesome/css/font-awesome.min.css">
-    <script src="http://www.jq22.com/jquery/jquery-1.10.2.js"></script>
+    <script src="/static/js/jquery.min.js"></script>
 </head>
 
 <body>
