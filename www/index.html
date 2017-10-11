@@ -1,18 +1,357 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>PHP-MSF</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+    <title></title>
+	<link href="./dist/css/mzui.min.css" rel="stylesheet">
+	<link rel="stylesheet" href="./css/style.css"/>
+	<link rel="stylesheet" href="./css/pullload.css">
 </head>
 <body>
-<div>
-  <p align="center">
-    <a href="https://github.com/pinguo/php-msf" target="_blank">
-      <img src="https://github.com/pinguo/php-msf/raw/master/php-msf.png" style="max-width:100%;">
-    </a>
-  </p>
-  <p align="center" style="font-size: 20px; font-weight: bolder;">PHP-MSF DEMO</p>
-  <p align="center">PHP微服务框架即“Micro Service Framework For PHP”示例项目</p>
-</div>
+	<div id="header"><!--头部开始-->
+		<div class="title">
+			<div class="me">
+			</div>
+			<div class="input" style="border:none;">
+				<i><img src="./images/2.png"></i>
+				<input type="text" name="" placeholder="请输入搜索词" class="user">
+				<div style="clear: both;"></div>
+			</div>
+			<div class="void"></div>
+		</div>
+	</div>
+	<div id="center">
+		
+		<nav class="nav primary-pale nav-secondary display in" id="navs" data-display-name="headNav" style="z-index: 1201;">
+			<a href="javascript:;" data-display-auto="" class="active" rel="0">开始</a>
+		</nav>
+
+
+
+		<div id="slideBox" class="slideBox">
+			<div class="bd">
+				<ul>
+				</ul>
+			</div>
+			<div class="hd">
+				<span class="prev"><!--<img src="./images/sohu-prev.png"/>--></span>
+				<span class="next"><!--<img src="./images/sohu-next.png"/>--></span>
+			</div>
+		</div>
+
+
+		<div id="warplist" class="">
+			<div class="tloader-symbol">
+				<p class="tloader-msg"><i></i></p>
+				<p class="tloader-loading">
+					<i class="ui-loading"></i>
+				</p>
+			</div>
+			<div class="tloader-body">
+				<!-- 此处添加具体内容 -->
+				<ul class="test-ul">
+				</ul>
+			</div>
+			<div class="tloader-footer">
+				<p class="tloader-btn"></p>
+				<p class="tloader-loading">
+					<i class="ui-loading"></i>
+				</p>
+			</div>
+		</div>
+
+		
+	</div><!--center开始-->
+
 </body>
+
+<script id="slide-template" type="application/ng-template">
+    <li>
+    	<a class="pic" href="javascript:void(0);"><img src="" /></a>
+        <a class="tit" href="javascript:void(0);"></a>
+	</li>
+</script>
+
+<script id="list_template" type="application/ng-template">
+	<li class="tab-rows">
+		<div>
+			<p class="title">中国学生在澳洲开飞机坠亡</p>
+			<p><span class="yuedu">阅读数</span><span class="push_time">1小时前</span></p>
+		</div>
+		<div>
+			<img src="./images/3.png">
+		</div>
+	</li>
+</script>
+
+
+<script src="http://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>
+<script src="./js/TouchSlide.1.1.js"></script>
+<script src="./dist/js/mzui.min.js"></script>
+<script src="./js/pullload.js"></script>
+
+<script type="application/javascript">
+var APIHOST = '',STATICHOST = '/static/upload';
+function initJssdk()
+{
+	$.ajax({
+   async:true,
+   url: APIHOST + '/articlefront/getsdkconf',
+   type: "GET",
+   dataType: 'jsonp',
+   jsonp: 'callback',
+   data: {url:window.location.href},
+   timeout: 5000,
+   cache:false,
+   success: function (reponse) {
+		wx.config({
+			debug: false,
+			appId: reponse.appId,
+			timestamp: reponse.timestamp,
+			nonceStr: reponse.nonceStr,
+			signature: reponse.signature,
+			jsApiList: [
+			'checkJsApi',
+			'onMenuShareTimeline',
+			'onMenuShareAppMessage',
+			]
+		});
+		var shaUrl = reponse.randhost + window.location.pathname +  window.location.search;
+		wx.ready(function() {
+
+			wx.onMenuShareAppMessage({
+				title: reponse.title,
+				desc:  reponse.desc,
+				link: shaUrl,
+				imgUrl: reponse.imageurl,
+				trigger: function (res) {
+				},
+				success: function (res) {
+				},
+				cancel: function (res) {
+				},
+				fail: function (res) {
+					alert(JSON.stringify(res));
+				}
+			});
+
+
+			wx.onMenuShareTimeline({
+				title: reponse.title,
+				link: reponse.desc,
+				imgUrl: shaUrl,
+				trigger: function (res) {
+				},
+				success: function (res) {
+				},
+				cancel: function (res) {
+				},
+				fail: function (res) {
+					alert(JSON.stringify(res));
+				}
+			});
+
+		});
+       if( reponse.totalcode.length > 0 ) {
+		   var total_script = document.createElement('script');
+           total_script.type = 'application/javascript';
+           total_script.src = reponse.totalcode;
+           document.body.appendChild(total_script);
+       }
+   },
+   complete: function(XMLHttpRequest, textStatus){
+   },
+   error: function(xhr){
+    alert("请求出错网络状况！");
+   }
+});
+}
+
+
+
+
+//初始化分类
+var CURRENT_CATEGORY = 0;
+function loadCategory()
+{
+$.ajax({
+   async:true,
+   url: APIHOST + '/articlefront/category',
+   type: "GET",
+   dataType: 'jsonp',
+   jsonp: 'callback',
+   data: {},
+   timeout: 5000,
+   cache:false,
+   success: function (reponse) {
+	   if( CURRENT_CATEGORY > 0 ) {
+			$("nav a.active").removeClass('active');
+	   }
+	   for( var e in reponse ) {
+		   var isActive = CURRENT_CATEGORY === reponse[e].id ? 'active' : '';
+			$('nav').append('<a href="javascript:;" rel='+reponse[e].id+' class="'+isActive+'">'+reponse[e].title+'</a>');
+	   }
+	   $("nav a").on('click',function() {
+			$("nav a.active").removeClass('active');
+			$(this).addClass('active');
+			CURRENT_CATEGORY = parseInt($(this).attr('rel'));
+			resetList();
+            loadtopart();
+            loadList();
+		});
+		loadtopart();
+       loadList();
+   },
+   complete: function(XMLHttpRequest, textStatus){
+   },
+   error: function(xhr){
+    alert("请求出错网络状况！");
+   }
+});
+}
+
+
+
+
+
+//初始化置顶文章
+function loadtopart()
+{
+$.ajax({
+   async:true,
+   url: APIHOST + '/articlefront/topart',
+   type: "GET",
+   dataType: 'jsonp',
+   jsonp: 'callback',
+   data: {category_id:CURRENT_CATEGORY},
+   timeout: 5000,
+   cache:false,
+   success: function (reponse) {
+       //$(".test-ul").prepend(createAll(reponse));
+       $('#slideBox > .bd').html('<ul></ul>');
+       if( reponse.length > 0 ) {
+           var topObj = $($('#slide-template').html());
+           for( var i = 0;i<reponse.length;i++ ) {
+               topObj.attr('data-id',reponse[i].id);
+               topObj.attr('onclick',"window.location.href='./content.html?id="+reponse[i].id+"'");
+               topObj.find('.pic img').attr( 'src', STATICHOST + reponse[i].cover_src );
+               topObj.find('.tit').text( reponse[i].title );
+               $('#slideBox > .bd ul').append( topObj.prop('outerHTML') );
+           }
+           document.getElementById('slideBox').style.display = 'block';
+           TouchSlide({ slideCell:"#slideBox", mainCell:".bd ul", effect:"leftLoop",autoPlay:true,interTime:5000});
+	   } else {
+           document.getElementById('slideBox').style.display = 'none';
+	   }
+   },
+   complete: function(XMLHttpRequest, textStatus){
+   },
+   error: function(xhr){
+    alert("请求出错网络状况！");
+   }
+});
+}
+
+
+
+
+//初始化列表
+function createLi(obj)
+{
+	var html = $('#list_template').html();
+	var htmlObj = $(html);
+	htmlObj.attr('data-id',obj.id);
+	htmlObj.attr('onclick',"window.location.href='./content.html?id="+obj.id+"'");
+	htmlObj.find('.title').text(obj.title);
+	htmlObj.find('img').attr('src',STATICHOST + obj.cover_src);
+    htmlObj.find('.yuedu').text('阅读数'+obj.views);
+	htmlObj.find('.push_time').text( obj.create_time );
+	return htmlObj.prop('outerHTML');
+}
+function createAll(arr)
+{
+	var html = "";
+	for(var i in arr){
+		html += createLi(arr[i]);
+	}
+	return html;
+}
+
+
+
+var PAGE = 1;
+var LOADEND = false,refush = 0;
+
+function loadList( success )
+{
+	var data = {page:PAGE,category_id:CURRENT_CATEGORY};
+	var unlock = function( success ) {
+		setTimeout(function(){
+			if( typeof success === 'function' ) {
+				success(false);
+			}
+		},300);
+	}
+	$.ajax({
+		async:true,
+		url: APIHOST + '/articlefront/list',
+		data: data,
+		type: 'GET',
+		dataType: 'jsonp',
+		jsonp: 'callback',
+		timeout: 5000,
+		cache:false,
+		success: function (e) {
+			if( e.length > 0 ) {
+				$(".test-ul").append(createAll(e));
+				PAGE++;
+			} else {
+				if( $('.test-ul li').length === 0 && refush === 0 ) {
+					resetList();
+					loadList();
+					refush++;
+				}
+				LOADEND = true;
+			}
+			unlock( success );
+		},
+		error: function(xhr){
+			alert("请求出错网络状况！");
+		}
+	});
+}
+
+function resetList()
+{
+	PAGE = 1;
+	LOADEND = false;
+	$('.test-ul').html('');
+}
+
+var INSTALLOBJ = new pullload({
+	container: document.body,
+	wrapper: document.getElementById("warplist"),
+	downEnough: 100,//下拉刷新距离px
+	onRefresh: function(success,error) {
+		resetList();
+        loadtopart();
+		loadList(success);
+	},
+	onLoadMore: function(success, error) {
+		LOADEND ? success(false) : loadList(success);
+	},
+	distanceBottom: 100,//距离底部触发加载更多
+});
+
+
+
+window.onload = function()
+{
+	initJssdk();
+	loadCategory();
+}
+
+</script>
+
 </html>

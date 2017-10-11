@@ -34,7 +34,7 @@
             <label class="layui-form-label">封面图</label>
             <div class="layui-input-block">
                 <div class="layui-upload" id="preview">
-                    <img id="imghead" alt="点击上传" border="0" src="/static/upload<?=$result[0]['cover_src']?>" width="500" height="300" onclick="$('#previewImg').click();">
+                    <img id="imghead" alt="点击上传" border="0" src="/static/upload<?=$result[0]['cover_src']?>" width="400" onclick="$('#previewImg').click();" style="background: #eee;min-height: 200px;text-align: center;line-height: 200px;cursor: pointer;">
                 </div>
                 <input type="file" name="cover_src" onchange="previewImage(this)" style="display: none;" id="previewImg">
             </div>

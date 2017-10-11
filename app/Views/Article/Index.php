@@ -26,9 +26,17 @@
 <!--        <a href="#" class="layui-btn layui-btn-small" id="getSelected">-->
 <!--            <i class="fa fa-shopping-cart" aria-hidden="true"></i> 获取全选信息-->
 <!--        </a>-->
-        <a href="javascript:;" class="layui-btn layui-btn-small" id="search">
-            <i class="layui-icon">&#xe615;</i> 搜索
-        </a>
+        <form class="layui-form" style="float:right;">
+            <div class="layui-form-item" style="margin:0;">
+                <label class="layui-form-label">标题/内容</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="search" placeholder="请输入关键字.." autocomplete="off" value="<?=isset($search)?$search:''?>" class="layui-input">
+                </div>
+                <div class="layui-form-mid layui-word-aux" style="padding:0;">
+                    <button lay-filter="search" class="layui-btn" lay-submit><i class="fa fa-search" aria-hidden="true"></i> 查询</button>
+                </div>
+            </div>
+        </form>
     </blockquote>
     <fieldset class="layui-elem-field">
         <legend>文章列表</legend>
@@ -39,9 +47,9 @@
 <!--                    <th style="width: 30px;"><input type="checkbox" lay-filter="allselector" lay-skin="primary"></th>-->
                     <th>ID</th>
                     <th>文章标题</th>
-                    <th><a title="点击排序" href="?sort=zan">被赞数</a></th>
-                    <th><a title="点击排序" href="?sort=yue">阅读数</a></th>
-                    <th><a title="点击排序" href="?sort=fen">分享数</a></th>
+                    <th><a title="点击排序" href="javascript:sort_location('zan')">被赞数</a></th>
+                    <th><a title="点击排序" href="javascript:sort_location('yue')">阅读数</a></th>
+                    <th><a title="点击排序" href="javascript:sort_location('fen')">分享数</a></th>
                     <th><a title="点击排序" href="">创建时间</a></th>
                     <th>操作</th>
                 </tr>
@@ -57,7 +65,7 @@
                     <td><?= $value['share_num']?:0?></td>
                     <td><?= $value['create_time']?></td>
                     <td>
-                        <a href="/article/articleDetails?id=<?= $value['id']?>" target="_blank" class="layui-btn layui-btn-normal layui-btn-mini">预览</a>
+                        <a href="/content.html?id=<?= $value['id']?>" target="_blank" class="layui-btn layui-btn-normal layui-btn-mini">预览</a>
                         <a href="/article/articleEdit?id=<?= $value['id']?>" data-opt="edit" class="layui-btn layui-btn-mini">编辑</a>
                         <a href="javascript:if(confirm('是否需要删除该文章?')) location='/article/articleDelete?id=<?=$value['id']?>';" data-id="1" data-opt="del" class="layui-btn layui-btn-danger layui-btn-mini">删除</a>
                     </td>
@@ -76,5 +84,14 @@
     </div>
 </div>
 </body>
+<script>
+    function sort_location(type) {
+        if(location.href.indexOf('?') > 0){
+            location=location.href+'&sort='+type
+        }else{
+            location=location.href+'?sort='+type
+        }
+    }
+</script>
 
 </html>

@@ -7,7 +7,7 @@
  */
 
 // Http服务器监听的端口
-$config['http_server']['port']    = 8000;
+$config['http_server']['port']    = 8001;
 // Http服务器监听的地址
 $config['http_server']['socket']  = '0.0.0.0';
 // Http服务器绑定的域名
@@ -25,6 +25,10 @@ $config['http']['domain']         = [
         'index' => ROOT_PATH . '/www/index.html',
     ],
     '0.0.0.0' => [
+        'root'  => ROOT_PATH . '/www/',
+        'index' => ROOT_PATH . '/www/index.html',
+    ],
+    '120.76.74.76' => [
         'root'  => ROOT_PATH . '/www/',
         'index' => ROOT_PATH . '/www/index.html',
     ],

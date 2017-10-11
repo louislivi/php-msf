@@ -3,7 +3,7 @@ namespace App\Controllers;
 
 use \App\Models\Advertisement as AdvertisementModel;
 use App\Models\Handlers\Page;
-use App\Models\Handlers\Upload;
+use \App\Tasks\Upload;
 
 /**
  * 广告管理类
@@ -39,13 +39,14 @@ class Advertisement extends AdminAuth
             $advertisementModel = $this->getObject(AdvertisementModel::class);
             $upload = $this->getObject(Upload::class);
             if ($this->getContext()->getInput()->getFile('cover_src')['name']){
-                $result = $upload->advertisement_upload("cover_src");
-                if($result){
-                    $filename = $upload->getFileName();
+                $result = yield $upload->advertisement_upload("cover_src");
+                if($result[0]){
+                    $filename = $result[1];
                     $true_filename = '/advertisement/'.$filename;
                     $post['cover_src'] = $true_filename;
                 }else{
-                    $this->error($upload->getErrorMsg());
+                    $errMsg = yield $upload->getErrorMsg();
+                    $this->error($errMsg);
                 }
             }
             $result = yield $advertisementModel->addAdvertisement($post);
@@ -72,13 +73,14 @@ class Advertisement extends AdminAuth
         }else{
             $upload = $this->getObject(Upload::class);
             if ($this->getContext()->getInput()->getFile('cover_src')['name']){
-                $result = $upload->advertisement_upload("cover_src");
-                if($result){
-                    $filename = $upload->getFileName();
+                $result = yield $upload->advertisement_upload("cover_src");
+                if($result[0]){
+                    $filename = $result[1];
                     $true_filename = '/advertisement/'.$filename;
                     $post['cover_src'] = $true_filename;
                 }else{
-                    $this->error($upload->getErrorMsg());
+                    $errMsg = yield $upload->getErrorMsg();
+                    $this->error($errMsg);
                 }
             }
             $result = yield $advertisementModel->editAdvertisement($id,$post);

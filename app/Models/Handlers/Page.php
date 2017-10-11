@@ -117,12 +117,12 @@ class Page extends Model
         if($this->page > 0)
             return ($this->page-1)*$this->listRows.", {$this->listRows}";
         else
-            return 0;
+            return 1;
     }
 
     /* 在对象内部使用的私有方法，用于自动获取访问的当前URL */
     private function getUri($query){
-        $request_uri = $_SERVER["REQUEST_URI"];
+        $request_uri = $this->getContext()->getInput()->getRequestUri();
         $url = strstr($request_uri,'?') ? $request_uri : $request_uri.'?';
 
         if(is_array($query))

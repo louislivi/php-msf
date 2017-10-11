@@ -21,6 +21,7 @@ class Category extends Model
             ->select($column)
             ->from('category','c1')
             ->leftJoin('category','c1.pid = c2.id','c2')
+            ->where('c1.pid',0)
             ->orderBy('front_sort','asc')
             ->go();
         return $bizLists;
@@ -95,8 +96,9 @@ class Category extends Model
             ->select('count(*) as article_total')
             ->from('article')
             ->where('category_id',$id)
+            ->where('if_del',0)
             ->go();
-        if ($article_total['result'][0]['article_total']){
+        if ( $article_total['result'][0]['article_total'] ) {
             return false;
         }else{
             $result  = yield $this->getMysqlPool('master')

@@ -37,12 +37,12 @@
                 <tbody id="content">
                <?php foreach ($result as $value):?>
                    <?php if(!$value['pid']):?>
-                        <tr style="background: 	#009688">
-                            <td><span style="color:#ffffff;font-weight: bold">ID:</span>&nbsp;<?= $value['id']?></td>
-                            <td><span style="color:#ffffff;font-weight: bold">栏目名称:</span>&nbsp;<?= $value['title']?></td>
-                            <td><span style="color:#ffffff;font-weight: bold">父级栏目:</span>&nbsp;<?= $value['p_title']?:'无'?></td>
-                            <td><span style="color:#ffffff;font-weight: bold">排序:</span>&nbsp;<?= $value['front_sort']?:0?></td>
-                            <td><span style="color:#ffffff;font-weight: bold">操作;</span>&nbsp;
+                        <tr style="">
+                            <td><span style="font-weight: bold">ID:</span>&nbsp;<?= $value['id']?></td>
+                            <td><span style="font-weight: bold">栏目名称:</span>&nbsp;<?= $value['title']?></td>
+                            <td><span style="font-weight: bold">父级栏目:</span>&nbsp;<?= $value['p_title']?:'无'?></td>
+                            <td><span style="font-weight: bold">排序:</span>&nbsp;<?= $value['front_sort']?:0?></td>
+                            <td><span style="font-weight: bold">操作;</span>&nbsp;
                                 <a href="/category/categoryEdit?id=<?= $value['id']?>" data-opt="edit" class="layui-btn layui-btn-mini">编辑</a>
                                 <a href="javascript:if(confirm('是否需要删除该文章?')) location='/category/categoryDelete?id=<?=$value['id']?>';" data-id="1" data-opt="del" class="layui-btn layui-btn-danger layui-btn-mini">删除</a>
                             </td>

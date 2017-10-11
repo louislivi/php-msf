@@ -14,6 +14,12 @@
     <link rel="stylesheet" href="/static/plugins/layui/css/layui.css" media="all" />
     <link rel="stylesheet" href="/static/plugins/font-awesome/css/font-awesome.min.css">
     <script src="/static/js/jquery.min.js"></script>
+
+    <link rel="stylesheet" href="/kind_editor_XikjO21/themes/default/default.css" />
+    <link rel="stylesheet" href="/kind_editor_XikjO21/plugins/code/prettify.css" />
+    <script charset="utf-8" src="/kind_editor_XikjO21/kindeditor-all-min.js"></script>
+    <script charset="utf-8" src="/kind_editor_XikjO21/lang/zh-CN.js"></script>
+    <script charset="utf-8" src="/kind_editor_XikjO21/plugins/code/prettify.js"></script>
 </head>
 
 <body>
@@ -28,13 +34,14 @@
         <div class="layui-form-item">
             <label class="layui-form-label">文章标题</label>
             <div class="layui-input-block">
-                <input type="text" name="title" lay-verify="title" autocomplete="off" maxlength="200" placeholder="请输入标题" value="<?=$article['result'][0]['title']?>" class="layui-input">
+                <input type="text" name="title" lay-verify="title" autocomplete="off" maxlength="200" placeholder="请输入标题" value="<?=$article['result'][0]['title']?>" class="layui-input" style="width: 38%;">
             </div>
         </div>
         <div class="layui-form-item">
             <label class="layui-form-label">文章栏目</label>
             <div class="layui-input-inline">
-                <select name="category_id" lay-filter="aihao">
+                <select name="category_id" lay-filter="category">
+                    <option value="请选择栏目" disabled>请选择栏目</option>
                     <?php foreach ($category['result'] as $v):?>
                         <option <?php if($article['result'][0]['category_id'] == $v['id']) echo 'selected=\'selected\'';?>
                                 value="<?=$v['id']?>"><?=$v['title']?></option>
@@ -46,7 +53,7 @@
             <label class="layui-form-label">封面图</label>
             <div class="layui-input-block">
                 <div class="layui-upload" id="preview">
-                    <img alt="点击上传" id="imghead" border="0" src="/static/upload<?=$article['result'][0]['cover_src']?>" width="500" height="300" onclick="$('#previewImg').click();">
+                    <img alt="点击上传" id="imghead" border="0" src="/static/upload<?=$article['result'][0]['cover_src']?>" width="400" onclick="$('#previewImg').click();" style="background: #eee;min-height: 200px;text-align: center;line-height: 200px;cursor: pointer;">
                 </div>
                 <input type="file" name="cover_src" onchange="previewImage(this)" style="display: none;" id="previewImg">
             </div>
@@ -70,9 +77,9 @@
             </div>
         </div>
         <div class="layui-form-item">
-            <label class="layui-form-label">是否推荐</label>
+            <label class="layui-form-label">关联文章</label>
             <div class="layui-input-block">
-                <input type="checkbox" <?php if ($article['result'][0]['recommend'])echo 'checked=""'; else echo ''; ?> name="recommend" lay-skin="switch" title="开关">
+                <input type="text" name="relation_ids" autocomplete="off" placeholder="填写关联文章id，多个以|符号分隔，例如1|2|3|4"  class="layui-input" style="width: 38%;" value="<?=$article['result'][0]['relation_ids']?>">
             </div>
         </div>
         <div class="layui-form-item">
@@ -175,36 +182,87 @@
         param.top = Math.round((maxHeight - param.height) / 2);
         return param;
     }
-    layui.use(['form', 'layedit', 'laydate'], function() {
+    layui.use(['form', 'laydate'], function() {
         var form = layui.form(),
             layer = layui.layer,
-            layedit = layui.layedit,
             laydate = layui.laydate;
 
-        //创建一个编辑器
-        var editIndex = layedit.build('LAY_demo_editor');
         //自定义验证规则
         form.verify({
             title: function(value) {
-                if(value.length < 5) {
-                    return '标题至少得5个字符啊';
+                value = $.trim(value);
+                if( value.length === 0 ) {
+                    return '标题必填';
                 }
             },
-            pass: [/(.+){6,12}$/, '密码必须6到12位'],
-            content: function(value) {
-                layedit.sync(editIndex);
-            }
+            category:function( value ) {
+                if( isNaN(value) || value <0 ) {
+                    return '栏目必须并且只能是正整数';
+                }
+            },
+            number:function ( value ) {
+                if( isNaN(value) || value <0 ) {
+                    return '只能是正整数';
+                }
+            },
+            content:function( value ) {
+                value = $.trim( value );
+                if( value.length === 0 ) {
+                    return '内容必填';
+                }
+            },
         });
 
         //监听提交
         form.on('submit(demo1)', function(data) {
             $('form').submit();
-//            layer.alert(JSON.stringify(data.field), {
-//                title: '最终的提交信息'
-//            })
             return false;
         });
     });
+
+
+
+    //编辑器配置
+    var editor1,inum = 0;
+    KindEditor.ready(function(K) {
+        editor1 = K.create('textarea[name="contents"]', {
+            cssPath : '/kind_editor_XikjO21/plugins/code/prettify.css',
+            //指定上传图片的服务器端程序
+            uploadJson : '/Article/EditUpImageApi',
+            //true时显示浏览服务器图片功能
+            allowFileManager : true,
+            width:'100%',
+            height:'500px',
+            items:[//配置编辑器的工具栏
+                'source', '|', 'undo', 'redo', '|', 'preview', 'template', 'code', 'cut', 'copy', 'paste','plainpaste', '|', 'justifyleft', 'justifycenter', 'justifyright','justifyfull', 'insertorderedlist', 'insertunorderedlist', 'indent', 'outdent', 'subscript','superscript', 'clearhtml', 'quickformat','/', 'selectall', '|', 'fullscreen','formatblock', 'fontname', 'fontsize', '|', 'forecolor', 'hilitecolor', 'bold','italic', 'underline', 'strikethrough', 'lineheight', 'removeformat', '|', 'multiimage', 'table', 'hr', 'emoticons', 'pagebreak','anchor', 'link', 'unlink',
+            ],
+            //设置编辑器创建后执行的回调函数
+            afterCreate : function() {
+                var self = this;
+                K.ctrl(document, 13, function() {
+                    self.sync();
+                    K('form[name=example]')[0].submit();
+                });
+                K.ctrl(self.edit.doc, 13, function() {
+                    self.sync();
+                    K('form[name=example]')[0].submit();
+                });
+            },
+            extraFileUploadParams:{'__RequestVerificationToken':'<?php isset($token)&&print_r($token);?>'},
+            filePostName:'file',
+            afterChange:function(){
+                if( inum === 0 ) {
+                    inum++;
+                    return null;
+                }
+                //var html = editor1.html();
+                //console.log(html);
+                editor1.sync();
+            },
+        });
+        prettyPrint();
+    });
+
 </script>
 </body>
 

@@ -4,7 +4,9 @@ use App\Models\Advertisement as AdvertisementModel;
 use App\Models\Article as ArticleModel;
 use App\Models\Category as CategoryModel;
 use App\Models\Handlers\Page;
-use App\Models\Handlers\Upload;
+use \App\Tasks\Upload;
+use \PG\MSF\Client\Http\Client;
+//use \App\Models\Handlers\Upload;
 use App\Models\Share as ShareModel;
 
 /**
@@ -19,7 +21,55 @@ class Article extends AdminAuth
      */
     public function actionIndex()
     {
-        switch ($this->getContext()->getInput()->get('sort')){
+        $sort = $this->getContext()->getInput()->get('sort');
+        if ($key_word = $this->getContext()->getInput()->get('search')){
+            //搜索
+            switch ($sort){
+                case 'zan':
+                    $orderBy = 'zan';
+                    break;
+                case 'yue':
+                    $orderBy = 'views';
+                    break;
+                case 'fen':
+                    $orderBy = 'share_num';
+                    break;
+                default:
+                    $orderBy = 'create_time';
+                    break;
+            }
+            $searchUrl = "http://127.0.0.1:8000/search/index.php";
+            $data = [
+                'q'    => urlencode($key_word),
+                'm'    => 'yes',
+                'f'    => '_all',
+                's'    => $orderBy.'-DESC',
+                'o'    => '',
+                'n'    => 25,
+                'json' => 'yes',
+                'p'    => $this->getContext()->getInput()->get('page')?:1
+            ];
+            //请求全文搜索api
+            $client  = $this->getObject(Client::class);
+//            //发送请求
+            $result  = yield $client->goSingleGet($searchUrl,$data);
+            $search_body = json_decode($result['body'],true);
+            //搜索结果分页
+            $total = $search_body['count'];
+            if($total > 0){
+                $page  = $this ->getObject(Page::class,[$total,$data['n'],
+                    'search='.$key_word]);
+                $pageList = $page ->fpage();
+                $view_data['pageList'] = $pageList;
+                $view_data['search']   = $key_word;
+                $view_data['result']   = $search_body['data'];
+                $this ->outputView($view_data);
+            }else{
+                $this ->error('未找到搜索结果!');
+            }
+            return;
+        }
+        switch ($sort){
             case 'zan':
                 $orderBy = 'i.zan';
                 break;
@@ -68,16 +118,18 @@ class Article extends AdminAuth
             $data['category']       = $category;
             $this->outputView($data);
         }else{
+            //$this->output($post);return;
             $articleModel = $this->getObject(ArticleModel::class);
             $upload = $this->getObject(Upload::class);
             if ($this->getContext()->getInput()->getFile('cover_src')['name']){
-                $result = $upload->article_upload("cover_src");
-                if($result){
-                    $filename = $upload->getFileName();
+                $result = yield $upload->article_upload("cover_src");
+                if($result[0]){
+                    $filename = $result[1];
                     $true_filename = '/article/'.$filename;
                     $post['cover_src'] = $true_filename;
-                }else{
-                    $this->error($upload->getErrorMsg());
+                } else {
+                    $errMsg = yield $upload->getErrorMsg();
+                    $this->error( $errMsg );
                 }
             }
             $result = yield $articleModel->addArticle($post);
@@ -112,13 +164,14 @@ class Article extends AdminAuth
         }else{
             $upload = $this->getObject(Upload::class);
             if ($this->getContext()->getInput()->getFile('cover_src')['name']){
-                $result = $upload->article_upload("cover_src");
-                if($result){
-                    $filename = $upload->getFileName();
+                $result = yield $upload->article_upload("cover_src");
+                if($result[0]){
+                    $filename = $result[1];
                     $true_filename = '/article/'.$filename;
                     $post['cover_src'] = $true_filename;
                 }else{
-                    $this->error($upload->getErrorMsg());
+                    $errMsg = yield $upload->getErrorMsg();
+                    $this->error($errMsg);
                 }
             }
             $result = yield $articleModel->saveArticle($id,$post);
@@ -203,13 +256,15 @@ class Article extends AdminAuth
         if (!empty($post) && $post != false){
             $upload = $this->getObject(Upload::class);
             if ($this->getContext()->getInput()->getFile('imageurl')['name']){
-                $result = $upload->article_upload("imageurl");
-                if($result){
-                    $filename = $upload->getFileName();
+                $result = yield $upload->article_upload("imageurl");
+                if($result[0]){
+                    $filename = $result[1];
                     $true_filename = '/article/'.$filename;
                     $post['imageurl'] = $true_filename;
                 }else{
-                    $this->error($upload->getErrorMsg());
+                    $errMsg = yield $upload->getErrorMsg();
+                    $this->error( $errMsg );
+                    return;
                 }
             }
             $result = yield $shareModel ->setWechatConfig(json_encode($post));
@@ -226,6 +281,7 @@ class Article extends AdminAuth
             $wx_data['randhost'] = $wx_data['randhost'] ?? '';
             $wx_data['desc']     = $wx_data['desc'] ?? '';
             $wx_data['imageurl'] = $wx_data['imageurl'] ?? '';
+            $wx_data['totalcode'] = $wx_data['totalcode'] ?? '';
             $this->outputView(['data' => $wx_data]);
 
         }
@@ -238,26 +294,22 @@ class Article extends AdminAuth
     {
         $upload = $this->getObject(Upload::class);
         if ($this->getContext()->getInput()->getFile('file')['name']){
-            $up_result = $upload->article_upload("file");
-            if($up_result){
-                $filename = $upload->getFileName();
+            $up_result = yield $upload->article_upload("file");
+            if($up_result[0]){
+                $filename = $up_result[1];
                 $true_filename = '/static/upload/article/'.$filename;
                 $result = [
-                    'code'=> 0,
+                    'error'=> 0,
                     'msg' => '',
-                    'data'=> [
-                        'src'   => $true_filename,
-                        'title' => $filename
-                    ]
+                    'url' => $true_filename,
+                    'title' => $filename
                 ];
             }else{
                 $result = [
-                    'code'=> 500,
-                    'msg' => $upload->getErrorMsg(),
-                    'data'=> [
-                        'src'   => '',
-                        'title' => ''
-                    ]
+                    'error'=> 500,
+                    'msg' => yield $upload->getErrorMsg(),
+                    'url' => '',
+                    'title' => '',
                 ];
             }
             $this->outputJson($result);

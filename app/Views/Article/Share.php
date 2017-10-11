@@ -14,6 +14,11 @@
     <link rel="stylesheet" href="/static/plugins/layui/css/layui.css" media="all" />
     <link rel="stylesheet" href="/static/plugins/font-awesome/css/font-awesome.min.css">
     <script src="/static/js/jquery.min.js"></script>
+    <style>
+        .layui-form-item .layui-input-inline{
+            width:360px;
+        }
+    </style>
 </head>
 
 <body>
@@ -55,10 +60,16 @@
             </div>
         </div>
         <div class="layui-form-item">
+            <label class="layui-form-label">统计代码</label>
+            <div class="layui-input-inline">
+                <input type="text" name="totalcode" autocomplete="off"  value="<?=$this->e($data['totalcode'])?>" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
             <label class="layui-form-label">分享封面</label>
             <div class="layui-input-block">
                 <div class="layui-upload" id="preview">
-                    <img alt="点击上传" id="imghead" border="0" src="/static/upload<?=$this->e($data['imageurl'])?>" width="500" height="300" onclick="$('#previewImg').click();">
+                    <img alt="点击上传" id="imghead" border="0" src="/static/upload<?=$this->e($data['imageurl'])?>" width="400" style="background: #eee;min-height: 200px;text-align: center;line-height: 200px;cursor: pointer;" onclick="$('#previewImg').click();">
                 </div>
                 <input type="file" name="imageurl" onchange="previewImage(this)" style="display: none;" id="previewImg">
             </div>

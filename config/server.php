@@ -17,9 +17,9 @@ $config['server']['set'] = [
     // swoole server的reactor数量
     'reactor_num'              => 2,
     // swoole server的worker数量
-    'worker_num'               => 1,
+    'worker_num'               => 4,
     // swoole server的task worker数量
-    'task_worker_num'          => 2,
+    'task_worker_num'          => 10,
     // swoole server的backlog队列长度
     'backlog'                  => 128,
     // swoole server启用open_tcp_nodelay

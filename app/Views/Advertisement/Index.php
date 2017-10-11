@@ -53,13 +53,13 @@
                         <!--                    <td><input type="checkbox" lay-skin="primary"></td>-->
                         <td><?= $value['id']?></td>
                         <td><?= $value['title']?></td>
-                        <td><img src="/static/upload<?=$value['cover_src']?>" width="500" height="300"></td>
+                        <td><div class="imgbox" style="max-height: 200px;overflow: hidden"><img src="/static/upload<?=$value['cover_src']?>" width="300"></div></td>
                         <td><?= $value['link']?:0?></td>
                         <td><?= $value['remarks']?:0?></td>
                         <td><?= $value['click_num']?></td>
                         <td><?= $value['create_time']?></td>
                         <td>
-                            <a href="<?= $value['link']?:'javascript:;'?>" target="_blank" class="layui-btn layui-btn-normal layui-btn-mini">预览</a>
+                            <!--<a href="<?/*= $value['link']?:'javascript:;'*/?>" target="_blank" class="layui-btn layui-btn-normal layui-btn-mini">预览</a>-->
                             <a href="/advertisement/advertisementEdit?id=<?= $value['id']?>" data-opt="edit" class="layui-btn layui-btn-mini">编辑</a>
                             <a href="javascript:if(confirm('是否需要删除该文章?')) location='/advertisement/advertisementDelete?id=<?=$value['id']?>';" data-id="1" data-opt="del" class="layui-btn layui-btn-danger layui-btn-mini">删除</a>
                         </td>

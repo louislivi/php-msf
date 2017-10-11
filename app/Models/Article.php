@@ -22,8 +22,8 @@ class Article extends Model
         $bizLists  = yield $this->getMysqlPool('master')
                                 ->select($column)
                                 ->from('article','a')
-                                ->where('a.if_del','0')
-                                ->leftJoin('article_info','a.id = i.article_id','i')
+                                ->innerJoin('article_info','a.id = i.article_id','i')
+                                ->where('a.if_del',0)
                                 ->limit($limit)
                                 ->orderBy($orderBy,'desc')
                                 ->go();
@@ -36,14 +36,16 @@ class Article extends Model
      */
     public function getDetails($id)
     {
-        $column = 'a.*,d.contents,r.recommend_time as recommend';
+        //$column = 'a.*,d.contents,r.recommend_time as recommend,tops.create_time as ding';
+        $column = 'a.*,d.contents,tops.create_time as ding';
         $bizDetails  = yield $this->getMysqlPool('master')
             ->select($column)
             ->from('article','a')
             ->where('a.id',$id)
-            ->leftJoin('article_info','a.id = i.article_id','i')
-            ->leftJoin('article_data','a.id = d.article_id','d')
-            ->leftJoin('article_recommend','a.id = r.article_id','r')
+            ->innerJoin('article_info','a.id = i.article_id','i')
+            ->innerJoin('article_data','a.id = d.article_id','d')
+            //->leftJoin('article_recommend','a.id = r.article_id','r')
+	    ->leftJoin('article_top','a.id = tops.article_id','tops')
             ->groupBy('a.id','desc')
             ->go();
         return $bizDetails;
@@ -84,31 +86,58 @@ class Article extends Model
      */
     public function addArticle($data)
     {
-        $recommend = $data['recommend']? true :false;
+        //$recommend = $data['recommend']? true :false;
         $contents =  $data['contents'];
-        unset($data['recommend']);
+        //unset($data['recommend']);
         unset($data['contents']);
-        if (isset($data['ding'])){
-            $data['ding'] = 1;
-        }else{
-            $data['ding'] = 0;
+        
+        $isding = false;
+        if( isset($data['ding']) ) {
+            $isding = true;
+            unset($data['ding']);
         }
-        $result  = yield $this->getMysqlPool('master')
+        //生成栏目序列值
+        $mysqlPool = $this->getMysqlPool('master');
+        $redisPool = $this->getRedisPool('p1');
+        $categoryCustomSeqId = yield $redisPool->get("category{$data['category_id']}_max_id");
+        $data['ccs_id'] = (int)$categoryCustomSeqId + 1;
+        $result  = yield $mysqlPool
             ->insert('article')
             ->set($data)
             ->go();
         $id = $result['insert_id'];
-        if ($recommend){
-            yield $this->getMysqlPool('master')
+
+        if( $id > 0 ) {
+            yield $redisPool->set("category{$data['category_id']}_max_id",$data['ccs_id']);
+            yield $redisPool->save();
+        }
+
+        if ( false === $isding  ) {
+           yield $mysqlPool->go(null,"delete from `article_top` where article_id = ".intval($id));
+        } else {
+          $isExist =  yield $mysqlPool->select('article_id')->from('article_top')->where('article_id',$id)->go();
+             if(! isset( $isExist['result'][0] ) ) {
+                  $nowtime = date('Y-m-d H:i:s');
+                  yield $mysqlPool->go(null,"insert into article_top(article_id,category_id,create_time) values
+         ({$id},{$data['category_id']},'{$nowtime}')");
+             }
+        }
+
+        /*$redisPool = $this->getRedisPool('p1');
+        yield $redisPool->set("category{$data['category_id']}_max_id",$id);
+        yield $redisPool->save();*/
+
+        /*if ($recommend){
+            yield $mysqlPool
                 ->insert('article_recommend')
                 ->set(['article_id' => $id,'recommend_time' => date('Y-m-d H:i:s')])
                 ->go();
-        }
-        yield $this->getMysqlPool('master')
+        }*/
+        yield $mysqlPool
             ->insert('article_info')
             ->set(['article_id' => $id,'views' => '0','zan' => '0','share_num' => '0'])
             ->go();
-        yield $this->getMysqlPool('master')
+        yield $mysqlPool
             ->insert('article_data')
             ->set(['article_id' => $id,'contents' => $contents,'create_time' => date('Y-m-d H:i:s')])
             ->go();
@@ -124,62 +153,69 @@ class Article extends Model
      */
     public function saveArticle($id,$data)
     {
-        if (!empty($data)){
+        if (! empty($data) ) {
             $data['create_time'] = date('Y-m-d H:i:s');
         }
 
-        $has_recommend  = yield $this->getMysqlPool('master')
-            ->select('article_id')
-            ->from('article_recommend','a')
-            ->where('article_id',$id)
-            ->go();
-        if (isset($data['recommend'])){
-            if (!isset($has_recommend['result'][0]['article_id'])){
-                yield $this->getMysqlPool('master')
-                    ->insert('article_recommend')
-                    ->set(['article_id' => $id,'recommend_time' => date('Y-m-d H:i:s')])
-                    ->go();
+        $mysqlPool = $this->getMysqlPool('master');
+
+        $dataExist = yield $mysqlPool->select('*')->from('article')->where('id',$id)->limit(1)->go();
+        if(! isset( $dataExist['result'][0] ) ) return false;
+
+        //处理置顶
+        if (! isset($data['ding']) ) {
+	        yield $mysqlPool->go(null,"delete from `article_top` where article_id = ".intval($id));
+        } else {
+            $isExist =  yield $mysqlPool->select('article_id')->from('article_top')->where('article_id',$id)->go();
+            if(! isset( $isExist['result'][0] ) ) {
+                $nowtime = date('Y-m-d H:i:s');
+                yield $mysqlPool->go(null,"insert into article_top(article_id,category_id,create_time) values ({$id},{$data['category_id']},'{$nowtime}')");
             }
-        }else{
-            if (isset($has_recommend['result'][0]['article_id'])){
-                yield $this->getMysqlPool('master')
-                    ->delete('FROM article_recommend')
-                    ->where('article_id',$id,'=')
-                    ->go();
-            }
+            unset($data['ding']);
         }
-        if (isset($data['ding'])){
-            $data['ding'] = 1;
-        }else{
-            $data['ding'] = 0;
-        }
-        $has_article_data = yield $this->getMysqlPool('master')
-            ->select('article_id')
+
+
+        $has_article_data = yield $mysqlPool->select('article_id')
             ->from('article_data')
             ->where('article_id',$id)
             ->go();
         if (isset($has_article_data['result'][0]['article_id'])){
-            yield $this->getMysqlPool('master')
-                ->update('article_data')
+            yield $mysqlPool->update('article_data')
                 ->set(['contents' => $data['contents'],'create_time' => date('Y-m-d H:i:s')])
                 ->where('article_id',$id)
                 ->go();
-        }else{
-            yield $this->getMysqlPool('master')
-                ->insert('article_data')
+        } else {
+            yield $mysqlPool->insert('article_data')
                 ->set(['article_id' => $id,'contents' => $data['contents'],'create_time' => date('Y-m-d H:i:s')])
                 ->go();
         }
-        unset($data['recommend']);
+        //unset($data['recommend']);
         unset($data['contents']);
-        $result  = yield $this->getMysqlPool('master')
-            ->update('article')
+
+
+        //改变文章所属栏目
+        if( $dataExist['result'][0]['category_id'] <> $data['category_id'] ) {
+            //生成栏目序列值
+            $redisPool = $this->getRedisPool('p1');
+            $categoryCustomSeqId = yield $redisPool->get("category{$data['category_id']}_max_id");
+            $data['ccs_id'] = (int)$categoryCustomSeqId + 1;
+        }
+
+
+        $result  = yield $mysqlPool->update('article')
             ->set($data)
             ->where('id',$id)
             ->go();
-        return $result['result'];
 
+        if( $dataExist['result'][0]['category_id'] <> $data['category_id'] && isset($redisPool) ) {
+            yield $redisPool->set("category{$data['category_id']}_max_id",$data['ccs_id']);
+            yield $redisPool->save();
+        }
+
+        return $result['result'];
     }
+
+
 
     /**
      * 获取文章作者

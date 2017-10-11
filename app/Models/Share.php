@@ -17,7 +17,9 @@ class Share extends Model
      */
     public function setWechatConfig($data)
     {
-        $result = yield $this->getRedisPool('p1')->set('ConfigureByWechat', $data);
+        $redisPool = $this->getRedisPool('p1');
+        $result = yield $redisPool->set('ConfigureByWechat', $data);
+        yield $redisPool->save();
         return $result;
     }
 

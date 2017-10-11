@@ -23,9 +23,9 @@ $config['server']['log'] = [
         ],
         'notice' => [
             'levelList' => [
-                \PG\Log\PGLog::NOTICE,
-                \PG\Log\PGLog::INFO,
-                \PG\Log\PGLog::DEBUG
+                //\PG\Log\PGLog::NOTICE,
+                //\PG\Log\PGLog::INFO,
+                //\PG\Log\PGLog::DEBUG
             ],
             'dateFormat' => "Y/m/d H:i:s",
             'format' => "%datetime% [%level_name%] [%channel%] [logid:%logId%] %message%\n",

@@ -79,8 +79,10 @@ class AdminBase extends Controller
      */
     protected function checkJWT($token = '')
     {
+        //$this->output($token);return;
         try{
-            if ($token == ''){
+            $token = trim($token);
+            if ( $token == '' ) {
                 $token = $this->getContext()->getInput()->getPost('__RequestVerificationToken');
             }
             $json = JWT::decode($token,self::$key,array('HS256'));

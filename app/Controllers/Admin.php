@@ -39,7 +39,7 @@ class Admin extends AdminBase
         if (!empty($post) && $post != false){
             $verify_result = $this->checkJWT();
             if ($verify_result){
-                if ($post['username'] == 'admin' && $post['password'] == 'admin'){
+                if ($post['username'] == 'admin' && $post['password'] == 'onetwo666'){
                     $this->getContext()->getOutput()
                         ->setCookie('username',$post['username']);
                     $this->getContext()->getOutput()
