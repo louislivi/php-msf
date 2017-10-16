@@ -30,6 +30,27 @@ class Advertisement extends Model
     }
 
     /**
+     * 获取首页广告
+     * @return bool|string
+     */
+    public function getHomeSetting()
+    {
+        $redisPool = $this->getRedisPool('p1');
+        return $redisPool ->get('index_adver_set');
+    }
+
+    /**
+     * 设置首页广告
+     * @param $value
+     * @return bool
+     */
+    public function setHomeSetting($value)
+    {
+        $redisPool = $this->getRedisPool('p1');
+        return $redisPool ->set('index_adver_set',$value);
+    }
+
+    /**
      * 获取广告详细列表
      * @param $limit integer limit
      * @return mixed

@@ -28,6 +28,33 @@ class Advertisement extends AdminAuth
     }
 
     /**
+     * 首页广告设置
+     */
+    public function actionHome()
+    {
+        $post = $this->getContext()->getInput()->getAllPost();
+        $advertisementModel = $this ->getObject(AdvertisementModel::class);
+        if (!isset($post['index_adver_set']) || $post == false) {
+            $data = yield $advertisementModel->getHomeSetting();
+            if ($data){
+                $data = implode('|',json_decode($data,true));
+                $this ->outputView(['index_adver_set'=>$data]);
+            }else{
+                $this ->outputView(['index_adver_set'=>'']);
+            }
+
+        }else{
+            $value = json_encode(explode('|',$post['index_adver_set']));
+            $result = yield $advertisementModel->setHomeSetting($value);
+            if ($result){
+                $this->success('修改成功！','/advertisement/home');
+            }else{
+                $this->error('修改失败！');
+            }
+        }
+    }
+
+    /**
      * 添加广告
      */
     public function actionAdvertisementAdd()

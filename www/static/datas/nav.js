@@ -9,6 +9,11 @@ var navs = [
 				"icon": "fa-navicon",
 				"href": "/article/index"
 			},
+            {
+                "title": "文章收藏",
+                "icon": "fa-star",
+                "href": "/article/collection"
+            },
 			{
 				"title": "分享设置",
 				"icon": "fa-reply",
@@ -37,6 +42,11 @@ var navs = [
                 "title": "广告列表",
                 "icon": "fa-navicon",
                 "href": "/advertisement/index"
+            },
+            {
+                "title": "首页广告",
+                "icon": "fa-home",
+                "href": "/advertisement/home"
             }
         ]
     }

@@ -19,6 +19,7 @@ class Share extends Model
     {
         $redisPool = $this->getRedisPool('p1');
         $result = yield $redisPool->set('ConfigureByWechat', $data);
+        yield $redisPool->del('wechat_access_token', 'wechat_jsapi_ticket');
         yield $redisPool->save();
         return $result;
     }

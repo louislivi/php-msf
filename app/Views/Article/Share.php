@@ -71,6 +71,7 @@
                 <div class="layui-upload" id="preview">
                     <img alt="点击上传" id="imghead" border="0" src="/static/upload<?=$this->e($data['imageurl'])?>" width="400" style="background: #eee;min-height: 200px;text-align: center;line-height: 200px;cursor: pointer;" onclick="$('#previewImg').click();">
                 </div>
+                <input type="hidden" name="imageurl" value="<?=$this->e($data['imageurl'])?>">
                 <input type="file" name="imageurl" onchange="previewImage(this)" style="display: none;" id="previewImg">
             </div>
         </div>

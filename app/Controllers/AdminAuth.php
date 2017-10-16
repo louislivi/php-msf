@@ -31,11 +31,11 @@ class AdminAuth extends AdminBase
             try{
                 $this->checkJWT($token);
             }catch(\Exception $exception){
-                $this->error('登录已失效！');
+                $this->error('登录已失效！','/admin/login');
                 return false;
             }
         }else{
-            $this->error('您尚未登录！');
+            $this->error('您尚未登录！','/admin/login');
             return false;
         }
     }
@@ -55,32 +55,6 @@ class AdminAuth extends AdminBase
                 return false;
             }
 
-        }
-    }
-
-    /**
-     * 异常的回调
-     *
-     * @param \Throwable $e 异常实例
-     * @throws \Throwable
-     */
-    public function onExceptionHandle(\Throwable $e)
-    {
-        try {
-            if ($e->getCode() != 10086){
-                if ($e->getPrevious()) {
-                    $ce     = $e->getPrevious();
-                    $errMsg = dump($ce, false, true);
-                } else {
-                    $errMsg = dump($e, false, true);
-                    $ce     = $e;
-                }
-                $this->getContext()->getLog()->error($errMsg);
-                $this->output('Internal Server Error', 500);
-            }
-        } catch (\Throwable $ne) {
-            getInstance()->log->error('previous exception ' . dump($ce, false, true));
-            getInstance()->log->error('handle exception ' . dump($ne, false, true));
         }
     }
 }

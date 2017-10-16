@@ -12,7 +12,7 @@
     if ('<?=$this->e($redirect_url)?>'){
         location.href = '<?=$this->e($redirect_url)?>';
     }else{
-        history.go(-1);
+        location.href = document.referrer;
     }
 </script>
 </html>

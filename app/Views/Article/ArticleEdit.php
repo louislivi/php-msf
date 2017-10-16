@@ -20,6 +20,36 @@
     <script charset="utf-8" src="/kind_editor_XikjO21/kindeditor-all-min.js"></script>
     <script charset="utf-8" src="/kind_editor_XikjO21/lang/zh-CN.js"></script>
     <script charset="utf-8" src="/kind_editor_XikjO21/plugins/code/prettify.js"></script>
+    <script src="http://open.web.meitu.com/sources/xiuxiu.js" type="text/javascript"></script>
+    <!-- 提示:: 如果你的网站使用https, 将xiuxiu.js地址的请求协议改成https即可 -->
+    <script type="text/javascript">
+        window.onload=function(){
+            host = 'http://'+window.location.host;
+            /*第1个参数是加载编辑器div容器，第2个参数是编辑器类型，第3个参数是div容器宽，第4个参数是div容器高*/
+            //xiuxiu.setLaunchVars("customMenu", ["decorate"]);
+            xiuxiu.setLaunchVars ("nav", "edit");
+            xiuxiu.setLaunchVars("sizeTipVisible", 1);
+            //xiuxiu.setLaunchVars("cropPresets", "100x100");
+            xiuxiu.embedSWF("altContent",1,"100%",600);
+            //修改为您自己的图片上传接口
+            xiuxiu.setUploadURL(host+"/article/EditUpImageApi");
+            xiuxiu.setUploadArgs ({'__RequestVerificationToken':"<?=$this->e($token)?>"});
+            xiuxiu.setUploadDataFieldName("file");
+            xiuxiu.setUploadType(2);
+            xiuxiu.onInit = function ()
+            {
+                xiuxiu.loadPhoto(host+"/static/upload<?=$article['result'][0]['cover_src']?>");//修改为要处理的图片url
+            }
+            xiuxiu.onUploadResponse = function (data)
+            {
+                alert('上传成功！');
+                data = JSON.parse(data);
+                xiuxiu.loadPhoto(host+data.url);
+                document.getElementById('cover_src').value = '/article/'+data.title;
+            }
+
+        }
+    </script>
 </head>
 
 <body>
@@ -50,36 +80,55 @@
             </div>
         </div>
         <div class="layui-form-item">
-            <label class="layui-form-label">封面图</label>
-            <div class="layui-input-block">
-                <div class="layui-upload" id="preview">
-                    <img alt="点击上传" id="imghead" border="0" src="/static/upload<?=$article['result'][0]['cover_src']?>" width="400" onclick="$('#previewImg').click();" style="background: #eee;min-height: 200px;text-align: center;line-height: 200px;cursor: pointer;">
-                </div>
-                <input type="file" name="cover_src" onchange="previewImage(this)" style="display: none;" id="previewImg">
+            <label class="layui-form-label">文章排版</label>
+            <div class="layui-input-inline">
+                <select name="list_typeset" lay-filter="aihao">
+                    <option
+                        <?php if($article['result'][0]['list_typeset'] == 1) echo 'selected=\'selected\''; ?>
+                             value="1">左右图文</option>
+                    <option
+                        <?php if($article['result'][0]['list_typeset'] == 2) echo 'selected=\'selected\''; ?>
+                             value="2">上下大图</option>
+                </select>
             </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">封面图</label>
+                <div class="layui-input-block">
+                    <div id="altContent" class="altContent"></div>
+                    <input lay-verify="image" id="cover_src" type="hidden" name="cover_src" value="<?=$article['result'][0]['cover_src']?>">
+                </div>
         </div>
         <div class="layui-form-item">
             <label class="layui-form-label">排序值</label>
             <div class="layui-input-inline">
-                <input type="number" value="<?=$article['result'][0]['backend_sort']?>" name="backend_sort" lay-verify="number" autocomplete="off" class="layui-input">
+                <input type="number" value="<?=$article['result'][0]['backend_sort']?>" name="backend_sort" lay-verify="number" min="0" max="1000" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">虚拟阅读数</label>
+            <div class="layui-input-inline">
+                <input type="number" value="<?=$article['result'][0]['views_offset']?:0?>" name="views_offset" lay-verify="number" autocomplete="off" class="layui-input">
             </div>
         </div>
         <div class="layui-form-item">
             <label class="layui-form-label">广告绑定</label>
-            <div class="layui-input-inline">
-                <select name="bind_ad" lay-filter="aihao">
-                    <option value="0">随机</option>
-                    <?php foreach ($advertisement['result'] as $v):?>
-                    <option <?php if($article['result'][0]['bind_ad'] == $v['id']) echo 'selected=\'selected\'';?>
-                            value="<?=$v['id']?>"><?=$v['title']?></option>
-                    <?php endforeach;?>
-                </select>
+            <div class="layui-input-block">
+                <span style="color: #ccc">填写关联广告id，多个以|符号分隔，例如1|2|3|4,默认0为随机</span>
+                <input type="text" name="bind_ad" autocomplete="off" placeholder="填写关联广告id，多个以|符号分隔，例如1|2|3|4,默认0为随机"  class="layui-input" lay-verify="ids" style="width: 38%;" value="<?=$article['result'][0]['bind_ad']?>">
+<!--                <select name="bind_ad" lay-filter="aihao">-->
+<!--                    <option value="0">随机</option>-->
+<!--                    --><?php //foreach ($advertisement['result'] as $v):?>
+<!--                        <option --><?php //if($article['result'][0]['bind_ad'] == $v['id']) echo 'selected=\'selected\'';?>
+<!--                                value="--><?//=$v['id']?><!--">--><?//=$v['title']?><!--</option>-->
+<!--                    --><?php //endforeach;?>
+<!--                </select>-->
             </div>
         </div>
         <div class="layui-form-item">
             <label class="layui-form-label">关联文章</label>
             <div class="layui-input-block">
-                <input type="text" name="relation_ids" autocomplete="off" placeholder="填写关联文章id，多个以|符号分隔，例如1|2|3|4"  class="layui-input" style="width: 38%;" value="<?=$article['result'][0]['relation_ids']?>">
+                <input lay-verify="ids" type="text" name="relation_ids" autocomplete="off" placeholder="填写关联文章id，多个以|符号分隔，例如1|2|3|4"  class="layui-input" style="width: 38%;" value="<?=$article['result'][0]['relation_ids']?>">
             </div>
         </div>
         <div class="layui-form-item">
@@ -130,58 +179,6 @@
 </div>
 <script type="text/javascript" src="/static/plugins/layui/layui.js"></script>
 <script>
-    //图片上传预览    IE是用了滤镜。
-    function previewImage(file)
-    {
-        var MAXWIDTH  = 500;
-        var MAXHEIGHT = 300;
-        var div = document.getElementById('preview');
-        if (file.files && file.files[0])
-        {
-            div.innerHTML ='<img id=imghead onclick=$("#previewImg").click()>';
-            var img = document.getElementById('imghead');
-            img.onload = function(){
-                var rect = clacImgZoomParam(MAXWIDTH, MAXHEIGHT, img.offsetWidth, img.offsetHeight);
-                img.width  =  rect.width;
-                img.height =  rect.height;
-//                 img.style.marginLeft = rect.left+'px';
-                img.style.marginTop = rect.top+'px';
-            }
-            var reader = new FileReader();
-            reader.onload = function(evt){img.src = evt.target.result;}
-            reader.readAsDataURL(file.files[0]);
-        }
-        else //兼容IE
-        {
-            var sFilter='filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(sizingMethod=scale,src="';
-            file.select();
-            var src = document.selection.createRange().text;
-            div.innerHTML = '<img id=imghead>';
-            var img = document.getElementById('imghead');
-            img.filters.item('DXImageTransform.Microsoft.AlphaImageLoader').src = src;
-            var rect = clacImgZoomParam(MAXWIDTH, MAXHEIGHT, img.offsetWidth, img.offsetHeight);
-            status =('rect:'+rect.top+','+rect.left+','+rect.width+','+rect.height);
-            div.innerHTML = "<div id=divhead style='width:"+rect.width+"px;height:"+rect.height+"px;margin-top:"+rect.top+"px;"+sFilter+src+"\"'></div>";
-        }
-    }
-    function clacImgZoomParam( maxWidth, maxHeight, width, height ){
-        var param = {top:0, left:0, width:width, height:height};
-        if( width>maxWidth || height>maxHeight ){
-            rateWidth = width / maxWidth;
-            rateHeight = height / maxHeight;
-
-            if( rateWidth > rateHeight ){
-                param.width =  maxWidth;
-                param.height = Math.round(height / rateWidth);
-            }else{
-                param.width = Math.round(width / rateHeight);
-                param.height = maxHeight;
-            }
-        }
-        param.left = Math.round((maxWidth - param.width) / 2);
-        param.top = Math.round((maxHeight - param.height) / 2);
-        return param;
-    }
     layui.use(['form', 'laydate'], function() {
         var form = layui.form(),
             layer = layui.layer,
@@ -204,6 +201,9 @@
                 if( isNaN(value) || value <0 ) {
                     return '只能是正整数';
                 }
+                if(value > 1000 ) {
+                    return '请输入1-1000范围值';
+                }
             },
             content:function( value ) {
                 value = $.trim( value );
@@ -211,6 +211,21 @@
                     return '内容必填';
                 }
             },
+            image:function( value ) {
+                value = $.trim( value );
+                if( value.length === 0 ) {
+                    return '请上传封面图，打开文件后点击右下角确定按钮！';
+                }
+            },
+            ids:function ( value ) {
+                if(value && value != 0){
+                    rgExp = /^(?:\d{1,}[\|$]?)+$/;
+                    verify = value.match(rgExp);
+                    if(!verify){
+                        return '请以|分割！';
+                    }
+                }
+            }
         });
 
         //监听提交

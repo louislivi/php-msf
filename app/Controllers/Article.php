@@ -3,6 +3,7 @@ namespace App\Controllers;
 use App\Models\Advertisement as AdvertisementModel;
 use App\Models\Article as ArticleModel;
 use App\Models\Category as CategoryModel;
+use App\Models\Collection as CollectionModel;
 use App\Models\Handlers\Page;
 use \App\Tasks\Upload;
 use \PG\MSF\Client\Http\Client;
@@ -22,28 +23,31 @@ class Article extends AdminAuth
     public function actionIndex()
     {
         $sort = $this->getContext()->getInput()->get('sort');
+        //查询收藏列表
+        $collectionModel  = $this->getObject(CollectionModel::class);
+        $collection = yield $collectionModel ->getListsKeys();
         if ($key_word = $this->getContext()->getInput()->get('search')){
             //搜索
-            switch ($sort){
-                case 'zan':
-                    $orderBy = 'zan';
-                    break;
-                case 'yue':
-                    $orderBy = 'views';
-                    break;
-                case 'fen':
-                    $orderBy = 'share_num';
-                    break;
-                default:
-                    $orderBy = 'create_time';
-                    break;
-            }
+//            switch ($sort){
+//                case 'zan':
+//                    $orderBy = 'zan';
+//                    break;
+//                case 'yue':
+//                    $orderBy = 'views';
+//                    break;
+//                case 'fen':
+//                    $orderBy = 'share_num';
+//                    break;
+//                default:
+//                    $orderBy = 'create_time';
+//                    break;
+//            }
             $searchUrl = "http://127.0.0.1:8000/search/index.php";
             $data = [
-                'q'    => urlencode($key_word),
+                'q'    => urldecode($key_word),
                 'm'    => 'yes',
                 'f'    => '_all',
-                's'    => $orderBy.'-DESC',
+                's'    => 'relevance',
                 'o'    => '',
                 'n'    => 25,
                 'json' => 'yes',
@@ -57,13 +61,23 @@ class Article extends AdminAuth
             //搜索结果分页
             $total = $search_body['count'];
             if($total > 0){
-                $page  = $this ->getObject(Page::class,[$total,$data['n'],
-                    'search='.$key_word]);
-                $pageList = $page ->fpage();
-                $view_data['pageList'] = $pageList;
-                $view_data['search']   = $key_word;
-                $view_data['result']   = $search_body['data'];
-                $this ->outputView($view_data);
+                if(isset($search_body['data'])) {
+                    $page  = $this ->getObject(Page::class,[
+                        $total,
+                        isset($data['n'])?$data['n']:'',
+                        'search='.$key_word]);
+                    $page ->set('view_last',false);
+                    $pageList = $page ->fpage();
+                    $page ->set('view_last',true);
+                    $view_data['pageList'] = $pageList;
+                    $view_data['search']   = $key_word;
+                    $view_data['result']   = $search_body['data'];
+                    $view_data['collection']   = $collection;
+                    $this ->outputView($view_data);
+                    return;
+                }else{
+                    $this ->error('页码值错误!');
+                }
             }else{
                 $this ->error('未找到搜索结果!');
             }
@@ -89,7 +103,8 @@ class Article extends AdminAuth
         $limit = $page ->limit;
         $data         = yield $articleModel->getLists($limit,$orderBy);
         $pageList = $page ->fpage();
-        $data['pageList'] = $pageList;
+        $data['pageList']   = $pageList;
+        $data['collection'] = $collection;
         $this->outputView($data);
     }
 
@@ -121,7 +136,15 @@ class Article extends AdminAuth
             //$this->output($post);return;
             $articleModel = $this->getObject(ArticleModel::class);
             $upload = $this->getObject(Upload::class);
-            if ($this->getContext()->getInput()->getFile('cover_src')['name']){
+            try{
+                $upload_condition =
+                    !empty(
+                        $this->getContext()->getInput()->getFile('cover_src')['name']);
+            }catch (\Exception $exception){
+                $upload_condition =
+                    isset($this->getContext()->getInput()->getFile('cover_src')['name']);
+            }
+            if ($upload_condition){
                 $result = yield $upload->article_upload("cover_src");
                 if($result[0]){
                     $filename = $result[1];
@@ -163,7 +186,15 @@ class Article extends AdminAuth
             $this->outputView($data);
         }else{
             $upload = $this->getObject(Upload::class);
-            if ($this->getContext()->getInput()->getFile('cover_src')['name']){
+            try{
+                $upload_condition =
+                    !empty(
+                    $this->getContext()->getInput()->getFile('cover_src')['name']);
+            }catch (\Exception $exception){
+                $upload_condition =
+                    isset($this->getContext()->getInput()->getFile('cover_src')['name']);
+            }
+            if ( $upload_condition){
                 $result = yield $upload->article_upload("cover_src");
                 if($result[0]){
                     $filename = $result[1];
@@ -227,6 +258,47 @@ class Article extends AdminAuth
             $this->success('删除失败!');
         }
 
+    }
+
+    /**
+     * 收藏列表
+     */
+    public function actionCollection()
+    {
+        $articleModel = $this->getObject(CollectionModel::class);
+        $result = yield $articleModel -> getList();
+        //$this ->outputjson(['result' => $result]);return;
+        $this ->outputView(['result' => $result]);
+    }
+
+    /**
+     * 文章收藏
+     * @param $id integer 文章id
+     */
+    public function actionArticleCollectionAdd($id)
+    {
+        $articleModel = $this->getObject(ArticleModel::class);
+        $result = yield $articleModel -> collectionListDetails($id);
+        if ($result){
+            $this->success('收藏成功!','/article/index');
+        }else{
+            $this->success('收藏失败!');
+        }
+    }
+
+    /**
+     * 取消文章收藏
+     * @param $id integer 文章id
+     */
+    public function actionArticleCollectionDel($id)
+    {
+        $CollectionModel = $this->getObject(CollectionModel::class);
+        $result = yield $CollectionModel -> delCollection($id);
+        if ($result){
+            $this->success('取消收藏成功!');
+        }else{
+            $this->success('取消收藏失败!');
+        }
     }
 
     /**

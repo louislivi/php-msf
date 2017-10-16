@@ -21,10 +21,12 @@ class Page extends Model
         'prev' => "上一页",
         'next' => "下一页",
         'first'=> "首页",
-        'last' => "末页"
+        'last' => "末页",
+        'view_last' => true
     );
 //在分页信息中显示内容，可以自己通过set()方法设置
     private $listNum = 10; //默认分页列表显示的个数
+
 
     /**
     构造方法，可以设置分页类的属性
@@ -203,7 +205,9 @@ class Page extends Model
     private function nextlast(){
         if($this->page != $this->pageNum) {
             $str = "&nbsp;<a href='{$this->uri}page=".($this->page+1)."'>{$this->config["next"]}</a>&nbsp;";
-            $str .= "&nbsp;<a href='{$this->uri}page=".($this->pageNum)."'>{$this->config["last"]}</a>&nbsp;";
+            if($this->config["view_last"]){
+                $str .= "&nbsp;<a href='{$this->uri}page=".($this->pageNum)."'>{$this->config["last"]}</a>&nbsp;";
+            }
             return $str;
         }
     }

@@ -49,6 +49,7 @@ class AdminBase extends Controller
             [
                 'message' => $message,'redirect_url' => $redirect_url
             ],'Admin/Success');
+        throw new \Exception('成功，页面关闭！',10086);
     }
 
     /**
@@ -61,6 +62,7 @@ class AdminBase extends Controller
             [
                 'message' => $message,'redirect_url' => $redirect_url
             ],'Admin/Error');
+        throw new \Exception('失败，页面关闭！',10086);
     }
 
     /**
@@ -90,6 +92,32 @@ class AdminBase extends Controller
             $json = [];
         }
         return $json;
+    }
+
+    /**
+     * 异常的回调
+     *
+     * @param \Throwable $e 异常实例
+     * @throws \Throwable
+     */
+    public function onExceptionHandle(\Throwable $e)
+    {
+        try {
+            if ($e->getCode() != 10086){
+                if ($e->getPrevious()) {
+                    $ce     = $e->getPrevious();
+                    $errMsg = dump($ce, false, true);
+                } else {
+                    $errMsg = dump($e, false, true);
+                    $ce     = $e;
+                }
+                $this->getContext()->getLog()->error($errMsg);
+                $this->output('Internal Server Error', 500);
+            }
+        } catch (\Throwable $ne) {
+            getInstance()->log->error('previous exception ' . dump($ce, false, true));
+            getInstance()->log->error('handle exception ' . dump($ne, false, true));
+        }
     }
 
 }

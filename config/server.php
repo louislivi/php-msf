@@ -15,7 +15,7 @@ $config['server']['pid_path']      = $config['server']['runtime_path'] . 'pids/'
 // 服务器配置
 $config['server']['set'] = [
     // swoole server的reactor数量
-    'reactor_num'              => 2,
+    'reactor_num'              => 4,
     // swoole server的worker数量
     'worker_num'               => 4,
     // swoole server的task worker数量

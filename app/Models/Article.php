@@ -16,9 +16,9 @@ class Article extends Model
      * @param $limit integer 分页
      * @return mixed
      */
-    public function getLists($limit,$orderBy)
+    public function getLists($limit,$orderBy )
     {
-        $column = 'a.id,a.title,a.create_time,i.share_num,i.zan,i.views';
+        $column = 'a.id,a.title,a.create_time,i.share_num,i.zan,i.views,i.views_offset';
         $bizLists  = yield $this->getMysqlPool('master')
                                 ->select($column)
                                 ->from('article','a')
@@ -31,13 +31,33 @@ class Article extends Model
     }
 
     /**
+     * 获取文章指定id，列表信息,并储存到redis
+     * @param $id
+     * @return mixed
+     */
+    public function collectionListDetails($id)
+    {
+        $column = 'a.id,a.title,a.create_time,i.share_num,i.zan,i.views,i.views_offset';
+        $bizLists  = yield $this->getMysqlPool('master')
+            ->select($column)
+            ->from('article','a')
+            ->innerJoin('article_info','a.id = i.article_id','i')
+            ->where('a.if_del',0)
+            ->andWhere('a.id',$id)
+            ->go();
+        $redisPool = $this->getRedisPool('p1');
+        $result = yield $redisPool->hMset('collection:1', [$id => json_encode($bizLists)]);
+        return $result == "OK"?true:false;
+    }
+
+    /**
      * 获取文章详情
      * @param $id integer 文章id
      */
     public function getDetails($id)
     {
         //$column = 'a.*,d.contents,r.recommend_time as recommend,tops.create_time as ding';
-        $column = 'a.*,d.contents,tops.create_time as ding';
+        $column = 'a.*,i.views_offset,d.contents,tops.create_time as ding';
         $bizDetails  = yield $this->getMysqlPool('master')
             ->select($column)
             ->from('article','a')
@@ -88,9 +108,10 @@ class Article extends Model
     {
         //$recommend = $data['recommend']? true :false;
         $contents =  $data['contents'];
+        $views_offset =  $data['views_offset'];
         //unset($data['recommend']);
         unset($data['contents']);
-        
+        unset($data['views_offset']);
         $isding = false;
         if( isset($data['ding']) ) {
             $isding = true;
@@ -135,7 +156,13 @@ class Article extends Model
         }*/
         yield $mysqlPool
             ->insert('article_info')
-            ->set(['article_id' => $id,'views' => '0','zan' => '0','share_num' => '0'])
+            ->set([
+                'article_id' => $id,
+                'views' => '0',
+                'zan' => '0',
+                'share_num' => '0',
+                'views_offset' => $views_offset
+            ])
             ->go();
         yield $mysqlPool
             ->insert('article_data')
@@ -157,7 +184,19 @@ class Article extends Model
             $data['create_time'] = date('Y-m-d H:i:s');
         }
 
+
+
         $mysqlPool = $this->getMysqlPool('master');
+
+        //设置文章虚拟阅读数
+        if (isset($data['views_offset'])){
+            yield $mysqlPool
+                ->update('article_info')
+                ->set(['views_offset' => $data['views_offset']])
+                ->where('article_id',$id)
+                ->go();
+            unset($data['views_offset']);
+        }
 
         $dataExist = yield $mysqlPool->select('*')->from('article')->where('id',$id)->limit(1)->go();
         if(! isset( $dataExist['result'][0] ) ) return false;
@@ -174,7 +213,7 @@ class Article extends Model
             unset($data['ding']);
         }
 
-
+        //添加文章内容
         $has_article_data = yield $mysqlPool->select('article_id')
             ->from('article_data')
             ->where('article_id',$id)
@@ -201,7 +240,7 @@ class Article extends Model
             $data['ccs_id'] = (int)$categoryCustomSeqId + 1;
         }
 
-
+        //添加文章信息
         $result  = yield $mysqlPool->update('article')
             ->set($data)
             ->where('id',$id)

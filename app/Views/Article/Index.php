@@ -46,7 +46,8 @@
                 <tr>
 <!--                    <th style="width: 30px;"><input type="checkbox" lay-filter="allselector" lay-skin="primary"></th>-->
                     <th>ID</th>
-                    <th>文章标题</th>
+                    <th width="42%">文章标题</th>
+                    <th>虚拟阅读数</th>
                     <th><a title="点击排序" href="javascript:sort_location('zan')">被赞数</a></th>
                     <th><a title="点击排序" href="javascript:sort_location('yue')">阅读数</a></th>
                     <th><a title="点击排序" href="javascript:sort_location('fen')">分享数</a></th>
@@ -60,14 +61,20 @@
 <!--                    <td><input type="checkbox" lay-skin="primary"></td>-->
                     <td><?= $value['id']?></td>
                     <td><?= $value['title']?></td>
-                    <td><?= $value['zan']?:0?></td>
-                    <td><?= $value['views']?:0?></td>
-                    <td><?= $value['share_num']?:0?></td>
+                    <td><?= $value['views_offset']??0?></td>
+                    <td><?= $value['zan']??0?></td>
+                    <td><?= $value['views']??0?></td>
+                    <td><?= $value['share_num']??0?></td>
                     <td><?= $value['create_time']?></td>
                     <td>
                         <a href="/content.html?id=<?= $value['id']?>" target="_blank" class="layui-btn layui-btn-normal layui-btn-mini">预览</a>
                         <a href="/article/articleEdit?id=<?= $value['id']?>" data-opt="edit" class="layui-btn layui-btn-mini">编辑</a>
                         <a href="javascript:if(confirm('是否需要删除该文章?')) location='/article/articleDelete?id=<?=$value['id']?>';" data-id="1" data-opt="del" class="layui-btn layui-btn-danger layui-btn-mini">删除</a>
+                        <?php if (in_array($value['id'],$collection)):?>
+                            <a href="javascript:if(confirm('是否取消收藏该文章?')) location='/article/articleCollectionDel?id=<?=$value['id']?>';" class="layui-btn layui-btn-normal layui-btn-small"><i class="layui-icon"></i></a>
+                        <?php else:?>
+                            <a href="javascript:if(confirm('是否需要收藏该文章?')) location='/article/articleCollectionAdd?id=<?=$value['id']?>';" class="layui-btn layui-btn-primary layui-btn-small"><i class="layui-icon"></i></a>
+                        <?php endif;?>
                     </td>
                 </tr>
                <?php endforeach;?>

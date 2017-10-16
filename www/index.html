@@ -13,11 +13,11 @@
 		<div class="title">
 			<div class="me">
 			</div>
-			<div class="input" style="border:none;">
+			<form class="input" method="GET" action="./so.html" style="border:none;">
 				<i><img src="./images/2.png"></i>
-				<input type="text" name="" placeholder="请输入搜索词" class="user">
+				<input type="text" name="k" placeholder="请输入搜索词" class="search">
 				<div style="clear: both;"></div>
-			</div>
+			</form>
 			<div class="void"></div>
 		</div>
 	</div>
@@ -93,6 +93,17 @@
 
 <script type="application/javascript">
 var APIHOST = '',STATICHOST = '/static/upload';
+
+
+function objtoarr( e )
+{
+    var arr = [];
+    for( var tmp in e ) {
+        arr[arr.length] = e[tmp];
+    }
+    return arr;
+}
+
 function initJssdk()
 {
 	$.ajax({
@@ -118,13 +129,14 @@ function initJssdk()
 			]
 		});
 		var shaUrl = reponse.randhost + window.location.pathname +  window.location.search;
+       var imgurl = window.location.protocol+'//'+window.location.host+STATICHOST + reponse.imageurl;
 		wx.ready(function() {
 
 			wx.onMenuShareAppMessage({
 				title: reponse.title,
 				desc:  reponse.desc,
 				link: shaUrl,
-				imgUrl: reponse.imageurl,
+				imgUrl: imgurl,
 				trigger: function (res) {
 				},
 				success: function (res) {
@@ -139,8 +151,9 @@ function initJssdk()
 
 			wx.onMenuShareTimeline({
 				title: reponse.title,
-				link: reponse.desc,
-				imgUrl: shaUrl,
+				desc: reponse.desc,
+				link: shaUrl,
+				imgUrl: imgurl,
 				trigger: function (res) {
 				},
 				success: function (res) {
@@ -201,7 +214,7 @@ $.ajax({
             loadList();
 		});
 		loadtopart();
-       loadList();
+        loadList();
    },
    complete: function(XMLHttpRequest, textStatus){
    },
@@ -228,6 +241,7 @@ $.ajax({
    timeout: 5000,
    cache:false,
    success: function (reponse) {
+       if( typeof reponse === 'object' ) reponse = objtoarr(reponse);
        //$(".test-ul").prepend(createAll(reponse));
        $('#slideBox > .bd').html('<ul></ul>');
        if( reponse.length > 0 ) {
@@ -280,6 +294,7 @@ function createAll(arr)
 
 
 
+
 var PAGE = 1;
 var LOADEND = false,refush = 0;
 
@@ -303,6 +318,7 @@ function loadList( success )
 		timeout: 5000,
 		cache:false,
 		success: function (e) {
+		    if( typeof e === 'object' ) e = objtoarr(e);
 			if( e.length > 0 ) {
 				$(".test-ul").append(createAll(e));
 				PAGE++;
