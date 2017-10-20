@@ -106,6 +106,9 @@ class Article extends Model
      */
     public function addArticle($data)
     {
+        if (! empty($data) ) {
+            $data['create_time'] = date('Y-m-d H:i:s');
+        }
         //$recommend = $data['recommend']? true :false;
         $contents =  $data['contents'];
         $views_offset =  $data['views_offset'];
@@ -119,20 +122,20 @@ class Article extends Model
         }
         //生成栏目序列值
         $mysqlPool = $this->getMysqlPool('master');
-        $redisPool = $this->getRedisPool('p1');
-        $categoryCustomSeqId = yield $redisPool->get("category{$data['category_id']}_max_id");
+        $categoryCustomSeqId = yield $mysqlPool
+            ->select('ccs_id')
+            ->from('article')
+            ->where('category_id',$data['category_id'])
+            ->orderBy('ccs_id','desc')
+            ->limit(1)
+            ->go();
+        $categoryCustomSeqId = $categoryCustomSeqId['result'][0]['ccs_id'];
         $data['ccs_id'] = (int)$categoryCustomSeqId + 1;
         $result  = yield $mysqlPool
             ->insert('article')
             ->set($data)
             ->go();
         $id = $result['insert_id'];
-
-        if( $id > 0 ) {
-            yield $redisPool->set("category{$data['category_id']}_max_id",$data['ccs_id']);
-            yield $redisPool->save();
-        }
-
         if ( false === $isding  ) {
            yield $mysqlPool->go(null,"delete from `article_top` where article_id = ".intval($id));
         } else {
@@ -235,8 +238,14 @@ class Article extends Model
         //改变文章所属栏目
         if( $dataExist['result'][0]['category_id'] <> $data['category_id'] ) {
             //生成栏目序列值
-            $redisPool = $this->getRedisPool('p1');
-            $categoryCustomSeqId = yield $redisPool->get("category{$data['category_id']}_max_id");
+            $categoryCustomSeqId = yield $mysqlPool
+                ->select('ccs_id')
+                ->from('article')
+                ->where('category_id',$data['category_id'])
+                ->orderBy('ccs_id','desc')
+                ->limit(1)
+                ->go();
+            $categoryCustomSeqId = $categoryCustomSeqId['result'][0]['ccs_id'];
             $data['ccs_id'] = (int)$categoryCustomSeqId + 1;
         }
 
@@ -245,11 +254,6 @@ class Article extends Model
             ->set($data)
             ->where('id',$id)
             ->go();
-
-        if( $dataExist['result'][0]['category_id'] <> $data['category_id'] && isset($redisPool) ) {
-            yield $redisPool->set("category{$data['category_id']}_max_id",$data['ccs_id']);
-            yield $redisPool->save();
-        }
 
         return $result['result'];
     }

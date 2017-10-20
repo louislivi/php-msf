@@ -44,7 +44,11 @@ class Advertisement extends AdminAuth
             }
 
         }else{
-            $value = json_encode(explode('|',$post['index_adver_set']));
+            if ($post['index_adver_set']){
+                $value = json_encode(explode('|',$post['index_adver_set']));
+            }else{
+                $value = '[]';
+            }
             $result = yield $advertisementModel->setHomeSetting($value);
             if ($result){
                 $this->success('修改成功！','/advertisement/home');

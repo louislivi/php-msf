@@ -135,12 +135,12 @@
             </div>
         </div>
 
-        <div class="layui-form-item">
-            <label class="layui-form-label">发布时间</label>
-            <div class="layui-input-inline">
-                <input type="text" readonly name="create_time" autocomplete="off"  placeholder="" value="<?=date('Y-m-d H:i:s')?>" class="layui-input">
-            </div>
-        </div>
+<!--        <div class="layui-form-item">-->
+<!--            <label class="layui-form-label">发布时间</label>-->
+<!--            <div class="layui-input-inline">-->
+<!--                <input type="text" readonly name="create_time" autocomplete="off"  placeholder="" value="--><?//=date('Y-m-d H:i:s')?><!--" class="layui-input">-->
+<!--            </div>-->
+<!--        </div>-->
         <div class="layui-form-item layui-form-text">
             <label class="layui-form-label">文章内容</label>
             <div class="layui-input-block">

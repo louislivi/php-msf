@@ -31,6 +31,15 @@
 					</div>
 				</div>
                 <div class="layui-form-item">
+                    <label class="layui-form-label">广告排版</label>
+                    <div class="layui-input-inline">
+                        <select name="list_typeset" lay-filter="aihao">
+                            <option value="1" >左右图文</option>
+                            <option value="2" >上下大图</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-form-item">
                     <label class="layui-form-label">封面图</label>
                     <div class="layui-input-block">
                         <div class="layui-upload" id="preview">
